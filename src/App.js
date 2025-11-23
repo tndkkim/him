@@ -2,218 +2,374 @@ import React, { useState } from 'react';
 import './App.css';
 
 function App() {
-  const [history, setHistory] = useState([
-    [
-      { x: 150, y: 100, hasBall: false },
-      { x: 300, y: 100, hasBall: false },
-      { x: 450, y: 100, hasBall: false },
-    ]
-  ]);
-  const [numMovesLimitLocked, setNumMovesLimitLocked] = useState(3);
-  const [numMovesLimit, setNumMovesLimit] = useState(3);
-  const [shellChoice, setShellChoice] = useState(null);
-  const boardWidth = 700;
-  const boardHeight = 500;
-  let numTransitions = 0;
+    const [history, setHistory] = useState([
+        [
+            { x: 150, y: 100, hasBall: false },
+            { x: 300, y: 100, hasBall: false },
+            { x: 450, y: 100, hasBall: false },
+        ]
+    ]);
+    const [numMovesLimitLocked, setNumMovesLimitLocked] = useState(3);
+    const [numMovesLimit, setNumMovesLimit] = useState(3);
+    const [shellChoice, setShellChoice] = useState(null);
+    const [transitionSpeed, setTransitionSpeed] = useState(200);
+    const [participantName, setParticipantName] = useState('');
+    const [gameLog, setGameLog] = useState([]);
+    const [currentGameStartTime, setCurrentGameStartTime] = useState(null);
+    const [gameEnded, setGameEnded] = useState(false); // 게임 종료 여부
 
-  function numMovesDone() {
-    return history.length - 1;
-  }
+    const boardWidth = 700;
+    const boardHeight = 500;
+    let numTransitions = 0;
 
-  function isStarted() {
-    return history[0].some(shell => shell.hasBall);
-  }
-
-  function isBallVisible() {
-    return history.length === 1 && isStarted();
-  }
-
-  function isFinished() {
-    return numMovesDone() === numMovesLimitLocked;
-  }
-
-  function handleDifficultyChange(e) {
-    setNumMovesLimit(Number(e.target.value));
-  }
-
-  function handleStartGame(e) {
-    e.preventDefault();
-
-    numTransitions = 0;
-
-    const currShells = history[history.length - 1];
-    const winningIndex = Math.floor(Math.random() * currShells.length);
-    const newShells = currShells.map((shell, shellIndex) => {
-      const newShell = Object.assign({}, shell);
-      newShell.hasBall = shellIndex === winningIndex;
-      return newShell;
-    });
-
-    setHistory([newShells]);
-    setShellChoice(null);
-    setNumMovesLimitLocked(numMovesLimit);
-  }
-
-  function handleTransitionEnd() {
-    numTransitions++;
-    if (numTransitions % 3 === 0) {
-      shuffleShells();
-    }
-  }
-
-  function generateNewPositions() {
-    const shellSize = 100;
-
-    function generateNewPosition(position) {
-      position.x = Math.floor(Math.random() * (boardWidth - shellSize));
-      position.y = Math.floor(Math.random() * (boardHeight - shellSize));
-      return position;
+    function numMovesDone() {
+        return history.length - 1;
     }
 
-    function isShellOverlap(acc, newPos) {
-      return acc.some(({ x, y }) => {
-        const overlapX = (newPos.x >= x - shellSize) && (newPos.x <= x + shellSize);
-        const overlapY = (newPos.y >= y - shellSize) && (newPos.y <= y + shellSize);
-        return overlapX && overlapY;
-      });
+    function isStarted() {
+        return history[0].some(shell => shell.hasBall);
     }
 
-    const newPositions = history[history.length - 1]
-      .reduce((acc, cur) => {
-        const shell = Object.assign({}, cur);
-        let newPos = generateNewPosition(shell);
+    function isBallVisible() {
+        return history.length === 1 && isStarted();
+    }
 
-        while(isShellOverlap(acc, newPos)) {
-          newPos = generateNewPosition(shell);
+    function isFinished() {
+        return numMovesDone() === numMovesLimitLocked;
+    }
+
+    function handleDifficultyChange(e) {
+        setNumMovesLimit(Number(e.target.value));
+    }
+
+    function handleSpeedChange(e) {
+        setTransitionSpeed(Number(e.target.value));
+    }
+
+    function handleStartGame(e) {
+        e.preventDefault();
+
+        numTransitions = 0;
+
+        const currShells = history[history.length - 1];
+        const winningIndex = Math.floor(Math.random() * currShells.length);
+        const newShells = currShells.map((shell, shellIndex) => {
+            const newShell = Object.assign({}, shell);
+            newShell.hasBall = shellIndex === winningIndex;
+            return newShell;
+        });
+
+        setHistory([newShells]);
+        setShellChoice(null);
+        setNumMovesLimitLocked(numMovesLimit);
+        setCurrentGameStartTime(new Date());
+        setGameEnded(false); // 게임 재시작
+    }
+
+    function handleShellClick(shell) {
+        if (!isFinished() || gameEnded) return; // 이미 선택했으면 클릭 무시
+
+        setShellChoice(shell);
+        setGameEnded(true); // 게임 종료
+
+        const endTime = new Date();
+        const responseTime = currentGameStartTime
+            ? (endTime - currentGameStartTime) / 1000
+            : 0;
+
+        const logEntry = {
+            timestamp: endTime.toISOString(),
+            participantName: participantName || 'Anonymous',
+            speed: transitionSpeed,
+            moves: numMovesLimitLocked,
+            isCorrect: shell.hasBall,
+            responseTime: responseTime.toFixed(2)
+        };
+
+        setGameLog([...gameLog, logEntry]);
+    }
+
+    function downloadCSV() {
+        if (gameLog.length === 0) {
+            alert('기록된 데이터가 없습니다!');
+            return;
         }
 
-        acc.push(newPos);
-        return acc;
-      }, []);
+        const headers = ['Timestamp', 'Participant', 'Speed(ms)', 'Moves', 'Correct', 'ResponseTime(s)'];
 
-    return newPositions;
-  }
+        const csvContent = [
+            headers.join(','),
+            ...gameLog.map(log =>
+                [
+                    log.timestamp,
+                    log.participantName,
+                    log.speed,
+                    log.moves,
+                    log.isCorrect ? 1 : 0,
+                    log.responseTime
+                ].join(',')
+            )
+        ].join('\n');
 
-  function shuffleShells() {
-    if (isFinished()) {
-      return;
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+
+        link.setAttribute('href', url);
+        link.setAttribute('download', `shell_game_data_${new Date().toISOString().slice(0, 10)}.csv`);
+        link.style.visibility = 'hidden';
+
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     }
 
-    const isFinalMove = numMovesDone() === numMovesLimitLocked - 1;
-
-    const newShellPositions = isFinalMove
-      ? finalShuffle(history[0])
-      : generateNewPositions();
-
-    setHistory(history.concat([newShellPositions]));
-  }
-
-  function finalShuffle(shells) {
-    const avalablePositions = shells.map(({ x }) => x);
-
-    const shuffledShells = shells.map(shell => {
-      const randomIndex = Math.floor(Math.random() * avalablePositions.length);
-      shell.x = avalablePositions[randomIndex];
-      avalablePositions.splice(randomIndex, 1);
-      return shell;
-    });
-
-    return shuffledShells;
-  }
-
-  function getBallClassNames() {
-    const ballClassNames = ['ball'];
-
-    if (isBallVisible()) {
-      ballClassNames.push('ball--start');
+    function handleTransitionEnd() {
+        numTransitions++;
+        if (numTransitions % 3 === 0) {
+            shuffleShells();
+        }
     }
 
-    if (shellChoice && shellChoice.hasBall) {
-      ballClassNames.push('ball--win');
+    function generateNewPositions() {
+        const shellSize = 100;
+
+        function generateNewPosition(position) {
+            position.x = Math.floor(Math.random() * (boardWidth - shellSize));
+            position.y = Math.floor(Math.random() * (boardHeight - shellSize));
+            return position;
+        }
+
+        function isShellOverlap(acc, newPos) {
+            return acc.some(({ x, y }) => {
+                const overlapX = (newPos.x >= x - shellSize) && (newPos.x <= x + shellSize);
+                const overlapY = (newPos.y >= y - shellSize) && (newPos.y <= y + shellSize);
+                return overlapX && overlapY;
+            });
+        }
+
+        const newPositions = history[history.length - 1]
+            .reduce((acc, cur) => {
+                const shell = Object.assign({}, cur);
+                let newPos = generateNewPosition(shell);
+
+                while (isShellOverlap(acc, newPos)) {
+                    newPos = generateNewPosition(shell);
+                }
+
+                acc.push(newPos);
+                return acc;
+            }, []);
+
+        return newPositions;
     }
 
-    return ballClassNames.join(' ');
-  }
+    function shuffleShells() {
+        if (isFinished()) {
+            return;
+        }
 
-  function Ball() {
-    return <div
-      className={getBallClassNames()}
-      onAnimationEnd={shuffleShells}>
-    </div>
-  }
+        const isFinalMove = numMovesDone() === numMovesLimitLocked - 1;
 
-  const shellElements = history[history.length - 1]
-    .map((shell, index) =>
-      <div
-        role="button"
-        key={index}
-        className="shell"
-        onClick={() => setShellChoice(shell)}
-        onTransitionEnd={handleTransitionEnd}
-        style={{transform: `translate(${shell.x}px, ${shell.y}px)`}}
-        disabled={!isFinished()}>
-        { shell.hasBall && <Ball/> }
-      </div>
-    );
+        const newShellPositions = isFinalMove
+            ? finalShuffle(history[0])
+            : generateNewPositions();
 
-  return (
-    <div className="App" style={{ width: boardWidth }}>
-      <h1>Shell game</h1>
+        setHistory(history.concat([newShellPositions]));
+    }
 
-      <form className="form" onSubmit={handleStartGame}>
-        <div>
-          <button
-            type="submit"
-            className="form__btn"
-            disabled={isStarted() && numMovesDone() < numMovesLimitLocked}>
-            START
-          </button>
+    function finalShuffle(shells) {
+        const avalablePositions = shells.map(({ x }) => x);
+
+        const shuffledShells = shells.map(shell => {
+            const randomIndex = Math.floor(Math.random() * avalablePositions.length);
+            shell.x = avalablePositions[randomIndex];
+            avalablePositions.splice(randomIndex, 1);
+            return shell;
+        });
+
+        return shuffledShells;
+    }
+
+    function getBallClassNames() {
+        const ballClassNames = ['ball'];
+
+        if (isBallVisible()) {
+            ballClassNames.push('ball--start');
+        }
+
+        if (shellChoice && shellChoice.hasBall) {
+            ballClassNames.push('ball--win');
+        }
+
+        return ballClassNames.join(' ');
+    }
+
+    function Ball() {
+        return <div
+            className={getBallClassNames()}
+            onAnimationEnd={shuffleShells}>
         </div>
+    }
 
-        <div className="form__options">
-          <label className="form__label">
-            <input
-              type="radio"
-              name="difficulty"
-              value="3"
-              onChange={handleDifficultyChange}
-              checked={numMovesLimit === 3}
-              disabled={isStarted() && !isFinished()}/>
-              Beginner
-          </label>
+    const shellElements = history[history.length - 1]
+        .map((shell, index) =>
+            <div
+                role="button"
+                key={index}
+                className="shell"
+                onClick={() => handleShellClick(shell)}
+                onTransitionEnd={handleTransitionEnd}
+                style={{
+                    transform: `translate(${shell.x}px, ${shell.y}px)`,
+                    transition: `transform ${transitionSpeed}ms`,
+                    cursor: (isFinished() && !gameEnded) ? 'pointer' : 'not-allowed', // 한 번만 클릭 가능
+                    opacity: gameEnded ? 0.7 : 1 // 게임 끝나면 반투명
+                }}
+                disabled={!isFinished() || gameEnded}>
+                {shell.hasBall && <Ball />}
+            </div>
+        );
 
-          <label className="form__label">
-            <input
-              type="radio"
-              name="difficulty"
-              value="5"
-              onChange={handleDifficultyChange}
-              checked={numMovesLimit === 5}
-              disabled={isStarted() && !isFinished()}/>
-              Intermediate
-          </label>
+    return (
+        <div className="App" style={{ width: boardWidth }}>
+            <h1>야바위 게임 실험</h1>
 
-          <label className="form__label">
-            <input
-              type="radio"
-              name="difficulty"
-              value="10"
-              onChange={handleDifficultyChange}
-              checked={numMovesLimit === 10}
-              disabled={isStarted() && !isFinished()}/>
-              Expert
-          </label>
+            <div className="participant-info" style={{ marginBottom: '20px' }}>
+                <label>
+                    참가자 이름:
+                    <input
+                        type="text"
+                        value={participantName}
+                        onChange={(e) => setParticipantName(e.target.value)}
+                        placeholder="이름 입력"
+                        disabled={isStarted() && !isFinished()}
+                        style={{ marginLeft: '10px', padding: '5px' }}
+                    />
+                </label>
+            </div>
+
+            <form className="form" onSubmit={handleStartGame}>
+                <div>
+                    <button
+                        type="submit"
+                        className="form__btn"
+                        disabled={isStarted() && numMovesDone() < numMovesLimitLocked}>
+                        START
+                    </button>
+
+                    <button
+                        type="button"
+                        className="form__btn"
+                        onClick={downloadCSV}
+                        style={{ marginLeft: '10px' }}>
+                        데이터 다운로드 (CSV)
+                    </button>
+                </div>
+
+                <div className="form__options">
+                    <h3>이동 횟수 설정</h3>
+                    <label className="form__label">
+                        <input
+                            type="radio"
+                            name="difficulty"
+                            value="3"
+                            onChange={handleDifficultyChange}
+                            checked={numMovesLimit === 3}
+                            disabled={isStarted() && !isFinished()} />
+                        3회
+                    </label>
+
+                    <label className="form__label">
+                        <input
+                            type="radio"
+                            name="difficulty"
+                            value="5"
+                            onChange={handleDifficultyChange}
+                            checked={numMovesLimit === 5}
+                            disabled={isStarted() && !isFinished()} />
+                        5회
+                    </label>
+
+                    <label className="form__label">
+                        <input
+                            type="radio"
+                            name="difficulty"
+                            value="7"
+                            onChange={handleDifficultyChange}
+                            checked={numMovesLimit === 7}
+                            disabled={isStarted() && !isFinished()} />
+                        7회
+                    </label>
+
+                    <label className="form__label">
+                        <input
+                            type="radio"
+                            name="difficulty"
+                            value="9"
+                            onChange={handleDifficultyChange}
+                            checked={numMovesLimit === 9}
+                            disabled={isStarted() && !isFinished()} />
+                        9회
+                    </label>
+                </div>
+
+                <div className="form__options">
+                    <h3>이동 속도 설정</h3>
+                    <label className="form__label">
+                        <input
+                            type="radio"
+                            name="speed"
+                            value="200"
+                            onChange={handleSpeedChange}
+                            checked={transitionSpeed === 200}
+                            disabled={isStarted() && !isFinished()} />
+                        매우 빠름 (200ms)
+                    </label>
+
+                    <label className="form__label">
+                        <input
+                            type="radio"
+                            name="speed"
+                            value="350"
+                            onChange={handleSpeedChange}
+                            checked={transitionSpeed === 350}
+                            disabled={isStarted() && !isFinished()} />
+                        빠름 (350ms)
+                    </label>
+
+                    <label className="form__label">
+                        <input
+                            type="radio"
+                            name="speed"
+                            value="500"
+                            onChange={handleSpeedChange}
+                            checked={transitionSpeed === 500}
+                            disabled={isStarted() && !isFinished()} />
+                        보통 (500ms)
+                    </label>
+
+                    <label className="form__label">
+                        <input
+                            type="radio"
+                            name="speed"
+                            value="650"
+                            onChange={handleSpeedChange}
+                            checked={transitionSpeed === 650}
+                            disabled={isStarted() && !isFinished()} />
+                        느림 (650ms)
+                    </label>
+                </div>
+            </form>
+
+            <div className="board" style={{ height: boardHeight }}>
+                <div className="board__result">
+                    {shellChoice && (shellChoice.hasBall ? '정답! 🎉' : '오답! ❌')}
+                </div>
+                {shellElements}
+            </div>
         </div>
-      </form>
-
-      <div className="board" style={{ height: boardHeight }}>
-        <div className="board__result">
-          { shellChoice && (shellChoice.hasBall ? 'FOUND IT!' : 'TRY ANOTHER') }
-        </div>
-        {shellElements}
-      </div>
-    </div>
-  )
+    )
 }
 
 export default App;
