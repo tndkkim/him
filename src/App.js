@@ -47,7 +47,9 @@ function App() {
     }
 
     function handleStartGame(e) {
-        e.preventDefault();
+        if (e) {
+            e.preventDefault();
+        }
 
         numTransitions = 0;
 
@@ -241,132 +243,135 @@ function App() {
         <div className="App" style={{ width: boardWidth }}>
             <h1>야바위 게임 실험</h1>
 
-            <div className="participant-info" style={{ marginBottom: '20px' }}>
-                <label>
-                    참가자 이름:
-                    <input
-                        type="text"
-                        value={participantName}
-                        onChange={(e) => setParticipantName(e.target.value)}
-                        placeholder="이름 입력"
-                        disabled={isStarted() && !isFinished()}
-                        style={{ marginLeft: '10px', padding: '5px' }}
-                    />
-                </label>
-            </div>
+            <form className="form">
+                <div className="form__section">
+                    <div className="form__section-title">
+                        <button
+                            type="button"
+                            className="form__title-btn form__title-btn--secondary"
+                            onClick={downloadCSV}>
+                            데이터 다운로드 (CSV)
+                        </button>
+                    </div>
+                    <div className="form__section-content">
+                        <h3>속도</h3>
+                        <label className="form__label">
+                            <input
+                                type="radio"
+                                name="speed"
+                                value="200"
+                                onChange={handleSpeedChange}
+                                checked={transitionSpeed === 200}
+                                disabled={isStarted() && !isFinished()} />
+                            <span>매우 빠름 (200ms)</span>
+                        </label>
 
-            <form className="form" onSubmit={handleStartGame}>
-                <div>
-                    <button
-                        type="submit"
-                        className="form__btn"
-                        disabled={isStarted() && numMovesDone() < numMovesLimitLocked}>
-                        START
-                    </button>
+                        <label className="form__label">
+                            <input
+                                type="radio"
+                                name="speed"
+                                value="350"
+                                onChange={handleSpeedChange}
+                                checked={transitionSpeed === 350}
+                                disabled={isStarted() && !isFinished()} />
+                            <span>빠름 (350ms)</span>
+                        </label>
 
-                    <button
-                        type="button"
-                        className="form__btn"
-                        onClick={downloadCSV}
-                        style={{ marginLeft: '10px' }}>
-                        데이터 다운로드 (CSV)
-                    </button>
+                        <label className="form__label">
+                            <input
+                                type="radio"
+                                name="speed"
+                                value="500"
+                                onChange={handleSpeedChange}
+                                checked={transitionSpeed === 500}
+                                disabled={isStarted() && !isFinished()} />
+                            <span>보통 (500ms)</span>
+                        </label>
+
+                        <label className="form__label">
+                            <input
+                                type="radio"
+                                name="speed"
+                                value="650"
+                                onChange={handleSpeedChange}
+                                checked={transitionSpeed === 650}
+                                disabled={isStarted() && !isFinished()} />
+                            <span>느림 (650ms)</span>
+                        </label>
+                    </div>
                 </div>
 
-                <div className="form__options">
-                    <h3>이동 횟수 설정</h3>
-                    <label className="form__label">
-                        <input
-                            type="radio"
-                            name="difficulty"
-                            value="3"
-                            onChange={handleDifficultyChange}
-                            checked={numMovesLimit === 3}
-                            disabled={isStarted() && !isFinished()} />
-                        3회
-                    </label>
+                <div className="form__section">
+                    <div className="form__section-title">
+                        <div className="form__title-input-wrapper">
+                            <input
+                                type="text"
+                                value={participantName}
+                                onChange={(e) => setParticipantName(e.target.value)}
+                                placeholder="이름 입력"
+                                disabled={isStarted() && !isFinished()}
+                                className="form__title-input"
+                            />
+                        </div>
+                    </div>
+                    <div className="form__section-content">
+                        <h3>횟수</h3>
+                        <label className="form__label">
+                            <input
+                                type="radio"
+                                name="difficulty"
+                                value="3"
+                                onChange={handleDifficultyChange}
+                                checked={numMovesLimit === 3}
+                                disabled={isStarted() && !isFinished()} />
+                            <span>3회</span>
+                        </label>
 
-                    <label className="form__label">
-                        <input
-                            type="radio"
-                            name="difficulty"
-                            value="5"
-                            onChange={handleDifficultyChange}
-                            checked={numMovesLimit === 5}
-                            disabled={isStarted() && !isFinished()} />
-                        5회
-                    </label>
+                        <label className="form__label">
+                            <input
+                                type="radio"
+                                name="difficulty"
+                                value="5"
+                                onChange={handleDifficultyChange}
+                                checked={numMovesLimit === 5}
+                                disabled={isStarted() && !isFinished()} />
+                            <span>5회</span>
+                        </label>
 
-                    <label className="form__label">
-                        <input
-                            type="radio"
-                            name="difficulty"
-                            value="7"
-                            onChange={handleDifficultyChange}
-                            checked={numMovesLimit === 7}
-                            disabled={isStarted() && !isFinished()} />
-                        7회
-                    </label>
+                        <label className="form__label">
+                            <input
+                                type="radio"
+                                name="difficulty"
+                                value="7"
+                                onChange={handleDifficultyChange}
+                                checked={numMovesLimit === 7}
+                                disabled={isStarted() && !isFinished()} />
+                            <span>7회</span>
+                        </label>
 
-                    <label className="form__label">
-                        <input
-                            type="radio"
-                            name="difficulty"
-                            value="9"
-                            onChange={handleDifficultyChange}
-                            checked={numMovesLimit === 9}
-                            disabled={isStarted() && !isFinished()} />
-                        9회
-                    </label>
-                </div>
-
-                <div className="form__options">
-                    <h3>이동 속도 설정</h3>
-                    <label className="form__label">
-                        <input
-                            type="radio"
-                            name="speed"
-                            value="200"
-                            onChange={handleSpeedChange}
-                            checked={transitionSpeed === 200}
-                            disabled={isStarted() && !isFinished()} />
-                        매우 빠름 (200ms)
-                    </label>
-
-                    <label className="form__label">
-                        <input
-                            type="radio"
-                            name="speed"
-                            value="350"
-                            onChange={handleSpeedChange}
-                            checked={transitionSpeed === 350}
-                            disabled={isStarted() && !isFinished()} />
-                        빠름 (350ms)
-                    </label>
-
-                    <label className="form__label">
-                        <input
-                            type="radio"
-                            name="speed"
-                            value="500"
-                            onChange={handleSpeedChange}
-                            checked={transitionSpeed === 500}
-                            disabled={isStarted() && !isFinished()} />
-                        보통 (500ms)
-                    </label>
-
-                    <label className="form__label">
-                        <input
-                            type="radio"
-                            name="speed"
-                            value="650"
-                            onChange={handleSpeedChange}
-                            checked={transitionSpeed === 650}
-                            disabled={isStarted() && !isFinished()} />
-                        느림 (650ms)
-                    </label>
+                        <label className="form__label">
+                            <input
+                                type="radio"
+                                name="difficulty"
+                                value="9"
+                                onChange={handleDifficultyChange}
+                                checked={numMovesLimit === 9}
+                                disabled={isStarted() && !isFinished()} />
+                            <span>9회</span>
+                        </label>
+                    </div>
                 </div>
             </form>
+
+            <div style={{ textAlign: 'center', margin: '20px 0' }}>
+                <button
+                    type="button"
+                    className="form__btn"
+                    onClick={handleStartGame}
+                    disabled={isStarted() && numMovesDone() < numMovesLimitLocked}>
+                    START
+                </button>
+            </div>
 
             <div className="board" style={{ height: boardHeight }}>
                 <div className="board__result">
