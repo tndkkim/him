@@ -363,10 +363,10 @@ function App() {
                 </div>
             </form>
 
-            <div style={{ textAlign: 'center', margin: '20px 0' }}>
+            <div style={{ textAlign: 'center', margin: '40px 0' }}>
                 <button
                     type="button"
-                    className="form__btn"
+                    className="start-btn"
                     onClick={handleStartGame}
                     disabled={isStarted() && numMovesDone() < numMovesLimitLocked}>
                     START
@@ -379,6 +379,8 @@ function App() {
                 </div>
                 {shellElements}
             </div>
+
+            <footer className="app-footer"></footer>
         </div>
     )
 }
