@@ -157,18 +157,6 @@ button:active {
   flex: 1;
 }
 
-.form__section:first-child .form__section-content::after {
-  content: '';
-  position: absolute;
-  right: -24px;
-  top: 50%;
-  width: 24px;
-  height: 2px;
-  background: #333;
-  transform: translateY(-50%);
-  z-index: 1;
-}
-
 .form__title-btn {
   width: 100%;
   padding: 14px 28px;
@@ -238,7 +226,7 @@ button:active {
 }
 
 .form__btn {
-  padding: 14px 28px;
+  padding: 15px 50px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   border-radius: 12px;
   border: none;
