@@ -102,7 +102,7 @@ function App() {
             ...gameLog.map(log =>
                 [
                     log.timestamp,
-                    log.participantName,
+                    `"${log.participantName}"`, // 쌍따옴표로 감싸기
                     log.speed,
                     log.moves,
                     log.isCorrect ? 1 : 0,
@@ -111,7 +111,10 @@ function App() {
             )
         ].join('\n');
 
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        // UTF-8 BOM 추가
+        const BOM = '\uFEFF';
+        const blob = new Blob([BOM + csvContent], { type: 'text/csv;charset=utf-8;' });
+
         const link = document.createElement('a');
         const url = URL.createObjectURL(blob);
 
@@ -122,6 +125,9 @@ function App() {
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
+
+        // 메모리 정리
+        URL.revokeObjectURL(url);
     }
 
     function handleTransitionEnd() {
